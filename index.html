@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Commodity Price Checker - India</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #f39c12, #e74c3c);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .search-section {
+            padding: 40px;
+            background: white;
+        }
+
+        .search-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .input-group {
+            position: relative;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 0.9rem;
+        }
+
+        .input-group input, .input-group select {
+            width: 100%;
+            padding: 15px 20px;
+            border: 2px solid #e1e8ed;
+            border-radius: 12px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: #fafbfc;
+        }
+
+        .input-group input:focus, .input-group select:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .commodity-input {
+            grid-column: 1 / -1;
+        }
+
+        .search-btn {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .search-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .search-btn:active {
+            transform: translateY(0);
+        }
+
+        .loading {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        .results-section {
+            padding: 40px;
+            background: #f8f9fa;
+            min-height: 200px;
+        }
+
+        .price-card {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+            border-left: 5px solid #27ae60;
+            animation: slideUp 0.6s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .price-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .commodity-name {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #2c3e50;
+            text-transform: capitalize;
+        }
+
+        .location-info {
+            font-size: 0.9rem;
+            color: #7f8c8d;
+            margin-bottom: 15px;
+        }
+
+        .price-display {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .price-item {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .price-label {
+            font-size: 0.85rem;
+            color: #7f8c8d;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .price-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #27ae60;
+        }
+
+        .disclaimer {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 20px;
+            font-size: 0.9rem;
+            color: #856404;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #7f8c8d;
+        }
+
+        .empty-state svg {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 20px;
+            opacity: 0.3;
+        }
+
+        .error-message {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .search-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .container {
+                margin: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌾 Commodity Price Checker</h1>
+            <p>Get live commodity prices from Indian markets</p>
+        </div>
+        
+        <div class="search-section">
+            <form id="priceForm">
+                <div class="search-grid">
+                  <div class="input-group">
+                      <label for="state">State</label>
+                          <select id="state" required>
+                            <option value="">Select State/UT</option>
+                            <!-- States -->
+                            <option value="Andhra Pradesh">Andhra Pradesh</option>
+                            <option value="Arunachal Pradesh">Arunachal Pradesh</option>
+                            <option value="Assam">Assam</option>
+                            <option value="Bihar">Bihar</option>
+                            <option value="Chhattisgarh">Chhattisgarh</option>
+                            <option value="Goa">Goa</option>
+                            <option value="Gujarat">Gujarat</option>
+                            <option value="Haryana">Haryana</option>
+                            <option value="Himachal Pradesh">Himachal Pradesh</option>
+                            <option value="Jharkhand">Jharkhand</option>
+                            <option value="Karnataka">Karnataka</option>
+                            <option value="Kerala">Kerala</option>
+                            <option value="Madhya Pradesh">Madhya Pradesh</option>
+                            <option value="Maharashtra">Maharashtra</option>
+                            <option value="Manipur">Manipur</option>
+                            <option value="Meghalaya">Meghalaya</option>
+                            <option value="Mizoram">Mizoram</option>
+                            <option value="Nagaland">Nagaland</option>
+                            <option value="Odisha">Odisha</option>
+                            <option value="Punjab">Punjab</option>
+                            <option value="Rajasthan">Rajasthan</option>
+                            <option value="Sikkim">Sikkim</option>
+                            <option value="Tamil Nadu">Tamil Nadu</option>
+                            <option value="Telangana">Telangana</option>
+                            <option value="Tripura">Tripura</option>
+                            <option value="Uttar Pradesh">Uttar Pradesh</option>
+                            <option value="Uttarakhand">Uttarakhand</option>
+                            <option value="West Bengal">West Bengal</option>
+                            <!-- Union Territories -->
+                            <option value="Andaman and Nicobar Islands">Andaman and Nicobar Islands</option>
+                            <option value="Chandigarh">Chandigarh</option>
+                            <option value="Dadra and Nagar Haveli and Daman and Diu">Dadra and Nagar Haveli and Daman and Diu</option>
+                            <option value="Delhi">Delhi</option>
+                            <option value="Jammu and Kashmir">Jammu and Kashmir</option>
+                            <option value="Ladakh">Ladakh</option>
+                            <option value="Lakshadweep">Lakshadweep</option>
+                            <option value="Puducherry">Puducherry</option>
+                          </select>
+                  </div>
+                  <div class="input-group">
+                    <label for="district">District</label>
+                    <select id="district" required>
+                      <option value="">Select District</option>
+                    </select>
+                  </div>
+                  <div class="input-group">
+                    <label for="mandi">Mandi/Market</label>
+                    <select id="mandi">
+                      <option value="">Select Market</option>
+                    </select>
+                  </div>
+                  <div class="input-group">
+                    <label for="commodity">Commodity</label>
+                    <select id="commodity" required>
+                      <option value="">Select Commodity</option>
+                    </select>
+                  </div>
+              </div>
+                <button type="submit" class="search-btn" id="searchBtn">
+                    🔍 Get Live Price
+                </button>
+            </form>
+        </div>
+        
+        <div class="results-section" id="resultsSection">
+            <div class="empty-state">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                </svg>
+                <h3>Enter commodity details above to get live prices</h3>
+                <p>Search for current market prices from government databases across India</p>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const form = document.getElementById('priceForm');
+        const resultsSection = document.getElementById('resultsSection');
+        const searchBtn = document.getElementById('searchBtn');
+        const url = 'https://api.data.gov.in/resource/9ef84268-d588-465a-a308-a864a43d0070?api-key=579b464db66ec23bdd000001cdc3b564546246a772a26393094f5645&offset=0&limit=1000&format=json';
+        
+        // Cache for API data to reduce requests
+        let commodityDataCache = null;
+        let cacheTimestamp = null;
+        const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
+        // Function to fetch commodity data from government API
+        async function fetchCommodityData() {            
+            try {
+                console.log('Attempting to fetch from government API...');
+                
+                // Try to fetch from government API with timeout
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
+                const response = await fetch(url, {
+                    signal: controller.signal,
+                    mode: 'cors'
+                });
+                
+                clearTimeout(timeoutId);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                if (data && data.records && data.records.length > 0) {
+                    console.log('Successfully fetched live data from government API');
+                    commodityDataCache = data.records;
+                    cacheTimestamp = Date.now();
+                    return data.records;
+                } else {
+                    throw new Error('Invalid data structure received from API');
+                }
+            } catch (error) {
+                console.warn('Government API not accessible:', error.message);
+                return;
+            }
+        }
+
+        async function fetchMarketHierarchy(url) {
+          const response = await fetch(url);
+          const data = await response.json();
+
+          if (!Array.isArray(data.records)) {
+            throw new Error("Expected 'records' array not found in response");
+          }
+
+          const result = {};
+
+          for (const item of data.records) {
+            const { state, district, market, commodity } = item;
+
+            if (!state || !district || !market || !commodity) continue; // skip bad rows
+
+            if (!result[state]) result[state] = {};
+            if (!result[state][district]) result[state][district] = {};
+            if (!result[state][district][market]) result[state][district][market] = new Set();
+
+            result[state][district][market].add(commodity);
+          }
+
+          // Convert Sets to Arrays
+          for (const state in result) {
+            for (const district in result[state]) {
+              for (const market in result[state][district]) {
+                result[state][district][market] = Array.from(result[state][district][market]);
+              }
+            }
+          }
+
+          return result;
+      }
+
+       // Function to search for commodity prices
+        function searchCommodityPrice(records, state, district, commodity, mandi = '') {
+            const results = records.filter(record => {
+                const matchesState = record.state && record.state.toLowerCase().includes(state.toLowerCase());
+                const matchesDistrict = record.district && record.district.toLowerCase().includes(district.toLowerCase());
+                const matchesCommodity = record.commodity && record.commodity.toLowerCase().includes(commodity.toLowerCase());
+                const matchesMandi = !mandi || (record.market && record.market.toLowerCase().includes(mandi.toLowerCase()));
+                
+                return matchesState && matchesDistrict && matchesCommodity && matchesMandi;
+            });
+            return results;
+        }
+
+        // Function to process records and calculate price statistics
+        function processRecords(records) {
+            const prices = {
+                min: [],
+                max: [],
+                modal: [],
+                arrivals: []
+            };
+            
+            records.forEach(record => {
+                if (record.min_price && !isNaN(parseFloat(record.min_price))) {
+                    prices.min.push(parseFloat(record.min_price));
+                }
+                if (record.max_price && !isNaN(parseFloat(record.max_price))) {
+                    prices.max.push(parseFloat(record.max_price));
+                }
+                if (record.modal_price && !isNaN(parseFloat(record.modal_price))) {
+                    prices.modal.push(parseFloat(record.modal_price));
+                }
+                if (record.arrival_qty && !isNaN(parseFloat(record.arrival_qty))) {
+                    prices.arrivals.push(parseFloat(record.arrival_qty));
+                }
+            });
+            
+            return {
+                min: prices.min.length > 0 ? Math.min(...prices.min) : 0,
+                max: prices.max.length > 0 ? Math.max(...prices.max) : 0,
+                modal: prices.modal.length > 0 ? Math.round(prices.modal.reduce((a, b) => a + b) / prices.modal.length) : 0,
+                arrivals: prices.arrivals.length > 0 ? Math.round(prices.arrivals.reduce((a, b) => a + b)) : 0,
+                unit: records[0]?.unit || 'per quintal',
+                recordCount: records.length
+            };
+        }
+        
+        function showPriceResults(commodity, state, district, mandi, priceData, records) {
+            const today = new Date().toLocaleDateString('en-IN', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            });
+            
+            // Get the most recent record date
+          const latestRecord = records.reduce((latest, record) => {
+            const [day, month, year] = record.arrival_date.split('/').map(Number);
+            const recordDate = new Date(year, month - 1, day);
+
+            const [lday, lmonth, lyear] = latest.arrival_date.split('/').map(Number);
+            const latestDate = new Date(lyear, lmonth - 1, lday);
+
+            return recordDate > latestDate ? record : latest;
+            }, records[0]);
+        
+          const priceDate = latestRecord?.arrival_date
+            ? (() => {
+                const parts = latestRecord.arrival_date.split('/');
+                if (parts.length === 3) {
+                  const [d, m, y] = parts.map(Number);
+                  return new Date(y, m - 1, d).toLocaleDateString('en-IN');
+                }
+                return today;
+              })()
+            : today;
+
+            const variety = latestRecord.variety || 'N/A';
+            const grade = latestRecord.grade || 'N/A';
+                                
+            resultsSection.innerHTML = `
+                <div class="price-card">
+                    <div class="price-header">
+                        <div class="commodity-name">${commodity}</div>
+                    </div>
+                                        
+                    <div class="location-info">
+                        📍 ${district}, ${state}, ${mandi} (${priceData.recordCount} market${priceData.recordCount > 1 ? 's' : ''})
+                        <br>📅 Arrival Date: ${priceDate}
+                        <br>🌾 Variety: ${variety} | Grade: ${grade}
+                    </div>
+                                      
+                    <div class="price-display">
+                        <div class="price-item">
+                            <div class="price-label">Minimum Price</div>
+                            <div class="price-value">₹${priceData.min || 'N/A'}</div>
+                        </div>
+                        
+                        <div class="price-item">
+                            <div class="price-label">Maximum Price</div>
+                            <div class="price-value">₹${priceData.max || 'N/A'}</div>
+                        </div>
+                        
+                        <div class="price-item">
+                            <div class="price-label">Average Modal Price</div>
+                            <div class="price-value">₹${priceData.modal || 'N/A'}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="location-info">
+                        All prices are in INR ${priceData.unit}
+                    </div>
+                    
+                    <div class="disclaimer">
+                        ${
+                            '✅ <strong>Live Data:</strong> Prices fetched from Government of India\'s official commodity database (data.gov.in). Data is updated regularly by market committees across India.'
+                        }
+                    </div>
+                </div>
+            `;
+        }
+        
+        function showError(message) {
+            resultsSection.innerHTML = `
+                <div class="error-message">
+                    <strong>Error:</strong> ${message}
+                </div>
+            `;
+        }
+        
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const state = document.getElementById('state').value;
+            const district = document.getElementById('district').value;
+            const mandi = document.getElementById('mandi').value;
+            const commodity = document.getElementById('commodity').value.trim();
+            
+            if (!state || !district || !commodity) {
+                showError('Please fill in all required fields');
+                return;
+            }
+            
+            searchBtn.classList.add('loading');
+            searchBtn.textContent = 'Fetching live prices...';
+            
+            try {
+                // Fetch real data from government API (with fallback)
+                const records = await fetchCommodityData();
+                console.log(`Fetched ${records.length} records`);
+                
+                // Search for matching commodity prices
+                const matchingRecords = searchCommodityPrice(records, state, district, commodity, mandi);
+                console.log(`Found ${matchingRecords.length} matching records`);
+                
+                if (matchingRecords.length > 0) {
+                    // Process the matching records to get price statistics
+                    const priceData = processRecords(matchingRecords);
+                    showPriceResults(commodity, state, district, mandi, priceData, matchingRecords);
+                } else {
+                    // Try a broader search without mandi filter
+                    const broaderResults = searchCommodityPrice(records, state, district, commodity);
+                    if (broaderResults.length > 0) {
+                        const priceData = processRecords(broaderResults);
+                        showPriceResults(commodity, state, district, '', priceData, broaderResults);
+                    } else {
+                        // Try even broader search - just state and commodity
+                        const stateResults = records.filter(record => {
+                            const matchesState = record.state && record.state.toLowerCase().includes(state.toLowerCase());
+                            const matchesCommodity = record.commodity && record.commodity.toLowerCase().includes(commodity.toLowerCase());
+                            return matchesState && matchesCommodity;
+                        });
+                        
+                        if (stateResults.length > 0) {
+                            const priceData = processRecords(stateResults);
+                            showPriceResults(commodity, state, 'Multiple Districts', '', priceData, stateResults);
+                        } else {
+                            showError(`No price data found for "${commodity}" in ${state}. Try different spellings or available commodities: Onion, Tomato, Potato, Wheat, Rice, Cotton, Gram, Mustard, Soybean, Groundnut.`);
+                        }
+                    }
+                }
+                
+            } catch (error) {
+                console.error('API Error:', error);
+                showError('Unable to fetch commodity data. Please check your internet connection and try again.');
+            }
+            
+            searchBtn.classList.remove('loading');
+            searchBtn.textContent = '🔍 Get Live Price';
+        });
+ 
+        document.addEventListener("DOMContentLoaded", async () => {
+          const stateSelect = document.getElementById("state");
+          const districtSelect = document.getElementById("district");
+          const mandiSelect = document.getElementById("mandi");
+          const commoditySelect = document.getElementById("commodity");
+
+          const hierarchy = await fetchMarketHierarchy(url); // replace with actual URL
+
+          // Populate districts on state change
+          stateSelect.addEventListener("change", () => {
+            const selectedState = stateSelect.value;
+            districtSelect.innerHTML = '<option value="">Select District</option>';
+            mandiSelect.innerHTML = '<option value="">Select Market</option>';
+            commoditySelect.innerHTML = '<option value="">Select Commodity</option>';
+
+            if (selectedState && hierarchy[selectedState]) {
+              for (const district of Object.keys(hierarchy[selectedState])) {
+                const option = document.createElement("option");
+                option.value = option.textContent = district;
+                districtSelect.appendChild(option);
+              }
+            }
+          });
+
+          // Populate markets on district change
+          districtSelect.addEventListener("change", () => {
+            const selectedState = stateSelect.value;
+            const selectedDistrict = districtSelect.value;
+            mandiSelect.innerHTML = '<option value="">Select Market</option>';
+            commoditySelect.innerHTML = '<option value="">Select Commodity</option>';
+
+            if (
+              selectedState &&
+              selectedDistrict &&
+              hierarchy[selectedState]?.[selectedDistrict]
+            ) {
+              for (const market of Object.keys(hierarchy[selectedState][selectedDistrict])) {
+                const option = document.createElement("option");
+                option.value = option.textContent = market;
+                mandiSelect.appendChild(option);
+              }
+            }
+          });
+
+          // Populate commodities on market change
+          mandiSelect.addEventListener("change", () => {
+            const selectedState = stateSelect.value;
+            const selectedDistrict = districtSelect.value;
+            const selectedMarket = mandiSelect.value;
+            commoditySelect.innerHTML = '<option value="">Select Commodity</option>';
+
+            if (
+              selectedState &&
+              selectedDistrict &&
+              selectedMarket &&
+              hierarchy[selectedState]?.[selectedDistrict]?.[selectedMarket]
+            ) {
+              for (const commodity of hierarchy[selectedState][selectedDistrict][selectedMarket]) {
+                const option = document.createElement("option");
+                option.value = option.textContent = commodity;
+                commoditySelect.appendChild(option);
+              }
+            }
+          });
+        });
+
+        // Add some interactive enhancements
+        const inputs = document.querySelectorAll('input, select');
+        inputs.forEach(input => {
+            input.addEventListener('focus', function() {
+                this.parentElement.style.transform = 'translateY(-2px)';
+            });
+            
+            input.addEventListener('blur', function() {
+                this.parentElement.style.transform = 'translateY(0)';
+            });
+        });
+    </script>
+</body>
+</html>
